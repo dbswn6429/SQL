@@ -15,3 +15,4 @@ select * from employees;
 select first_name, job_id , commission_pct from employees where commission_pct >0;
 --2003년도 입사한 사원의 이름과 입사일 그리고 급여를 출력하세요.(BETWEEN 연산자 사용)
 select first_name, hire_date ,salary from employees where hire_date between '2003/01/01' and '2003/12/31';
+2003년도 입사한 사원의 이름과 입사일 그리고 급여를 출력하세요.(LIKE 연산자 사용)

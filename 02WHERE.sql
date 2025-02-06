@@ -1,4 +1,4 @@
--- WHERE절
+-- WHERE절예제
 select * from employees;
 select first_name, job_id from employees where job_id = 'IT_PROG';
 select * from employees where salary >= 15000;

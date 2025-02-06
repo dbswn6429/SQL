@@ -8,7 +8,7 @@ select * from employees where first_name = 'Steven';  --데이터는 대소문�
 select * from employees where hire_date ='04/01/30'; --날짜도 문자열로 찾으면 됨
 select * from employees where hire_date <= '04/01/30';
 
---between A and B
+--between A and B 예제
 select * from employees where salary between 10000 and 15000;
 select * from employees where hire_date between '03/01/01' and '03/12/31';
 

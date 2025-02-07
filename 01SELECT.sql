@@ -1,4 +1,4 @@
--- ctrl + / 빠른 주석
+-- ctrl + / 빠른 주석 
 select * from employees;
 select * from departments;
 select * from locations;

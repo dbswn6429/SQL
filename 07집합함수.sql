@@ -1,0 +1,41 @@
+--집합연산자
+--UNION -합집합(중복X)
+--UNION ALL -합집합(중복C)
+--INTERSECT - 교집합
+--MINUS - 차집합
+
+--컬럼 개수가 일치해야 집합연산자 사용이 가능합니다
+SELECT FIRST_NAME, HIRE_DATE FROM EMPLOYEES WHERE HIRE_DATE LIKE '04%'
+UNION
+SELECT FIRST_NAME, HIRE_DATE FROM EMPLOYEES WHERE DEPARTMENT_ID = 20;
+
+SELECT FIRST_NAME, HIRE_DATE FROM EMPLOYEES WHERE HIRE_DATE LIKE '04%'
+UNION ALL
+SELECT FIRST_NAME, HIRE_DATE FROM EMPLOYEES WHERE DEPARTMENT_ID = 20;
+
+SELECT FIRST_NAME, HIRE_DATE FROM EMPLOYEES WHERE HIRE_DATE LIKE '04%'
+INTERSECT
+SELECT FIRST_NAME, HIRE_DATE FROM EMPLOYEES WHERE DEPARTMENT_ID = 20;
+
+SELECT FIRST_NAME, HIRE_DATE FROM EMPLOYEES WHERE HIRE_DATE LIKE '04%'
+MINUS
+SELECT FIRST_NAME, HIRE_DATE FROM EMPLOYEES WHERE DEPARTMENT_ID = 20;
+-------------
+--가상테이블을 합쳐서 사용가능
+SELECT 'PARK', 200 FROM DUAL
+UNION ALL
+SELECT 'KIM', 300 FROM DUAL
+UNION ALL
+SELECT 'LEE', 400 FROM DUAL;
+
+
+--------------------------------
+--시험의 단골문제
+--분석함수
+select first_name,
+    salary,
+    rank() over(order by salary desc) as 중복등수,
+    dense_rank() over(order by salary desc) as 중복없는등수,
+    ROW_NUMBER() over(order by salary desc) as 일련번호,
+    ROWNUM -- 정렬이 되면 순서가 바뀜
+from employees;

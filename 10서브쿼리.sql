@@ -124,4 +124,193 @@ select location_id, street_address, city, country_id,
 (select country_name from countries c where c.country_id = l.country_id) as country_name
 from locations l order by country_name;
 
+-------------------------------------------------------------------------------------------
+--인라인 뷰 -FROM절 하위에 서브쿼리가 들어값니다.
+--SELECT절에서 만든 가상 컬럼에 대해서 조회를 해 나갈때 사용합니다.
+SELECT *
+FROM (SELECT *
+      FROM (SELECT *
+            FROM EMPLOYEES)
+);
+
+--ROWNUM은 조회된 순서에 대해서 번호가 붙기때문에 ORDER BY를 시키면 순서가 뒤바뀝니다.
+SELECT ROWNUM EMPLOYEE_ID,
+       FIRST_NAME,
+       SALARY
+FROM EMPLOYEES
+ORDER BY SALARY DESC;
+--인라인 뷰
+SELECT EMPLOYEE_ID,
+       FIRST_NAME,
+       SALARY
+FROM(SELECT *
+     FROM EMPLOYEES
+     ORDER BY SALARY DESC
+     )
+WHERE ROWNUM >10 AND ROWNUM <=20 ; --10~20번째 데이터가 나와야하는데, ROWNUM은 1부터만 조회가 가능합니다.
+
+--인라인뷰로 FROM절에 필요한 컬럼을 가상의 컬럼으로 만들어 놓고, 조회
+SELECT *
+FROM(
+     SELECT ROWNUM AS RN,
+     --FIRST_NAME || LAST_NAME AS NAME,
+     --SALARY
+      A.*
+FROM (
+       SELECT *
+       FROM EMPLOYEES
+       ORDER BY SALARY DESC
+       ) A
+) 
+WHERE RN> 10 AND RN<=20;
+
+--인라인뷰 EX
+--근속년수 컬럼, COMMISSION이 더해진 급여 컬럼을 가상으로 만들고 조회~
+SELECT FIRST_NAME || ' ' || LAST_NAME AS 이름,
+       TRUNC((SYSDATE - HIRE_DATE)/365) AS 근속년수,
+       SALARY + SALARY* NVL(COMMISSION_PCT, 0) AS 급여
+FROM EMPLOYEES
+ORDER BY 근속년수;
+
+-------------------------------------------------------------------------------
+--문제 9.
+--EMPLOYEES테이블 에서 first_name기준으로 내림차순 정렬하고, 41~50번째 데이터의 행 번호, 이름을 출력하세요
+SELECT * 
+FROM(SELECT ROWNUM AS RN ,
+     CONCAT(FIRST_NAME,LAST_NAME)AS 이름
+FROM (
+      SELECT * FROM EMPLOYEES
+      ORDER BY FIRST_NAME DESC)
+)
+WHERE RN>40 AND RN<50;
+--문제 10.
+--EMPLOYEES테이블에서 hire_date기준으로 오름차순 정렬하고, 31~40번째 데이터의 행 번호, 사원id, 이름, 번호, 
+--입사일을 출력하세요.
+SELECT * FROM EMPLOYEES;
+SELECT * 
+FROM (SELECT ROWNUM AS RN,
+      EMPLOYEE_ID,
+      CONCAT(FIRST_NAME,LAST_NAME) AS 이름,
+      PHONE_NUMBER,
+      HIRE_DATE
+      FROM (SELECT * FROM EMPLOYEES
+            ORDER BY HIRE_DATE DESC)
+)
+WHERE RN>30 AND RN<=40;
+--문제 11.
+--COMMITSSION을 적용한 급여를 새로운 컬럼으로 만들고, 이 데이터에서 10000보다 큰 사람들을 뽑아 보세요. (인라인뷰를 쓰면 됩니다)
+SELECT * 
+FROM (
+    SELECT employee_id, first_name, last_name, salary, commission_pct,
+           salary + (salary * commission_pct) AS total_salary
+    FROM employees
+) A
+WHERE total_salary > 10000;
+--문제 12.
+--조인의 최적화
+--SELECT CONCAT(FIRST_NAME, LAST_NAME) AS NAME,
+--       D.DEPARTMENT_ID
+--FROM EMPLOYEES E
+--JOIN DEPARTMENTS D
+--ON E.DEPARTMENT_ID = D.DEPARTMENT_ID
+--WHERE EMPLOYEE_ID = 200;
+--
+--이론적으로 위 구문의 실행방식은 EMPLOYEES - DEPARTMENTS 테이블을 먼저 조인하고, 후에 WHERE조건을 실행하게 됩니다.
+--항상 이런것은 아닙니다. (이것은 데이터베이스 검색엔진(옵티마이저)에 의해 바뀔 수도 있습니다)
+--그렇다면 SUBQUERY절로 WHERE구문을 작성하고, JOIN을 붙이는 것도 가능하지 않을까요?
+--
+--=> 부서아이디가 200인 데이터를 인라인뷰로 조회한 후에 JOIN을 붙여보세요.
+SELECT CONCAT(E.FIRST_NAME,E.LAST_NAME) AS 이름,
+              D.DEPARTMENT_ID
+FROM(
+      SELECT *
+      FROM EMPLOYEES
+      WHERE EMPLOYEE_ID = 200
+)E
+JOIN DEPARTMENTS D
+ON E.DEPARTMENT_ID = E.DEPARTMENT_ID;
+
+--------------------------------------------------------------------
+--문제13
+--EMPLOYEES테이블, DEPARTMENTS 테이블을 left조인하여, 입사일 오름차순 기준으로 10-20번째 데이터만 출력합니다.
+--조건) rownum을 적용하여 번호, 직원아이디, 이름, 입사일, 부서이름 을 출력합니다.
+--조건) hire_date를 기준으로 오름차순 정렬 되어야 합니다. rownum이 망가지면 안되요.
+select *
+from (
+    select rownum rn,
+       employee_id,
+       first_name || last_name as name,
+       hire_date,
+       department_name
+    from(
+        select * 
+        from employees e 
+        left join departments d
+        on e.department_id = d.department_id
+        order by hire_date
+ )
+)
+where rn >=10 and rn <=20;
+
+--문제14
+--SA_MAN 사원의 급여 내림차순 기준으로 ROWNUM을 붙여주세요.
+--조건) SA_MAN 사원들의 ROWNUM, 이름, 급여, 부서아이디, 부서명을 출력하세요.
+SELECT ROWNUM AS RN, 
+        FIRST_NAME || ' ' || LAST_NAME AS 이름,
+        SALARY,
+        DEPARTMENT_ID,
+        (SELECT DEPARTMENT_NAME FROM DEPARTMENTS D WHERE A.DEPARTMENT_ID = D.DEPARTMENT_ID)AS 부서명
+    FROM (
+        SELECT *
+            FROM EMPLOYEES 
+            WHERE JOB_ID = 'SA_MAN'
+            ORDER BY SALARY DESC
+           
+        )A
+;
+
+
+--문제15
+--DEPARTMENTS테이블에서 각 부서의 부서명, 매니저아이디, 부서에 속한 인원수 를 출력하세요.
+--조건) 인원수 기준 내림차순 정렬하세요.
+--조건) 사람이 없는 부서는 출력하지 뽑지 않습니다.
+--힌트) 부서의 인원수 먼저 구한다. 이 테이블을 조인한다.
+select * 
+from departments d
+left join (
+    select department_id ,
+           count(*) as 인원수
+    from employees
+    group by department_id
+) A
+on d.department_id = a.department_id;
+--문제16
+--부서에 모든 컬럼, 주소, 우편번호, 부서별 평균 연봉을 구해서 출력하세요.
+--조건) 부서별 평균이 없으면 0으로 출력하세요
+SELECT * FROM EMPLOYES;
+select * from locations;
+select * from departments;
+
+--SELECT 
+--    D.*, 
+--    (SELECT AVG(SALARY) FROM EMPLOYEES E WHERE E.DEPARTMENT_ID = D.DEPARTMENT_ID GROUP BY DEPARTMENT_ID) AS 평균연봉
+--FROM departments D;
+
+SELECT D.*,
+    평균연봉,
+    L.STREET_ADDRESS,
+    L.POSTAL_CODE
+    FROM DEPARTMENTS D
+LEFT JOIN(
+    SELECT DEPARTMENT_ID,
+            AVG(SALARY) AS 평균연봉
+    FROM EMPLOYEES
+    GROUP BY DEPARTMENT_ID
+)A
+ON D.DEPARTMENT_ID = A.DEPARTMENT_ID
+LEFT JOIN LOCATIONS L
+ON D.LOCATION_ID = L.LOCATION_ID;
+
+
+
 
